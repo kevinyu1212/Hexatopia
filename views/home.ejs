@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hexatopia - 메인 대시보드</title>
+    <title>Hexatopia - 메인 대시보관</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .section-title { font-size: 18px; font-weight: 700; color: var(--text-bold); margin: 35px 0 15px 0; display: flex; align-items: center; gap: 8px; }
@@ -17,24 +17,12 @@
             <div class="logo" onclick="location.href='/'">Hexatopia</div>
             
             <div class="header-right">
-                <div class="desktop-nav-links">
-                    <a href="/">홈</a>
-                    <a href="/feed">피드</a>
-                    <a href="/map">곤충지도</a>
-                    <a href="/forum">포럼</a>
-                    <a href="/mypage">마이페이지</a>
-                    <a href="/market">안심마켓</a>
-                </div>
-                
-                <div class="auth-btn-group">
-                    <% if (session.isLoggedIn) { %>
-                        <span style="font-size:13px; color:var(--text-muted); display:inline-block; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle;">👤 <%= session.nickname %></span>
-                        <a href="/toggle-auth" class="btn-sm btn-login">로그아웃</a>
-                    <% } else { %>
-                        <a href="/toggle-auth" class="btn-sm btn-login">로그인</a>
-                        <a href="/toggle-auth" class="btn-sm btn-register">회원가입</a>
-                    <% } %>
-                </div>
+                <% if (session.isLoggedIn) { %>
+                    <span style="font-size:13px; color:var(--text-muted); display:inline-block; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle;">👤 <%= session.nickname %></span>
+                    <a href="/toggle-auth" class="btn-auth-combined" style="color: #f85149; border-color: rgba(248,81,73,0.3);">로그아웃</a>
+                <% } else { %>
+                    <a href="/toggle-auth" class="btn-auth-combined">로그인 / 회원가입</a>
+                <% } %>
 
                 <button class="hamburger-btn" id="menuToggle">
                     <span></span><span></span><span></span>
@@ -44,15 +32,15 @@
 
         <div class="sidebar-overlay" id="overlay"></div>
         <div class="mobile-sidebar" id="sidebar">
-            <div style="padding-bottom: 12px; border-bottom: 1px solid var(--border-color); font-size: 14px; font-weight: bold; color: var(--text-bold);">
-                📌 바로가기 메뉴
+            <div style="padding-bottom: 12px; border-bottom: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-muted); letter-spacing: 0.5px;">
+                HEXATOPIA NAVIGATION
             </div>
             <a href="/">🏠 홈 대시보드</a>
             <a href="/feed">📱 오픈 피드</a>
-            <a href="/map">🗺️ 시민과학 지도</a>
-            <a href="/forum">💬 학술 포럼</a>
-            <a href="/mypage">📊 마이페이지</a>
-            <a href="/market">🛒 안심 마켓</a>
+            <a href="/map">🗺️ 생태 시민과학 지도</a>
+            <a href="/forum">💬 대안 학술 포럼</a>
+            <a href="/mypage">📊 관제 마이페이지</a>
+            <a href="/market">🛒 AI 안심 분양 마켓</a>
         </div>
 
         <div class="container">
@@ -87,7 +75,7 @@
 
             <div class="two-col-grid" style="margin-top: 15px;">
                 <div>
-                    <div class="section-title"><div class="live-indicator"></div> 🗺️ 실시간 전국 곤충 발견 피</div>
+                    <div class="section-title"><div class="live-indicator"></div> 🗺️ 실시간 전국 곤충 발견 피드</div>
                     <div class="card" style="margin:0; min-height: 250px;">
                         <% recentPins.forEach(pin => { %>
                             <div class="list-item">
@@ -137,7 +125,6 @@
         const overlay = document.getElementById('overlay');
 
         function toggleMenu() {
-            menuToggle.classList.toggle('active');
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
         }
