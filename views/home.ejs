@@ -2,32 +2,93 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hexatopia - 홈</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <header>
-        <div style="font-size: 24px; font-weight: bold; color: #4caf50;">Hexatopia 헥사토피아</div>
-        <nav>
-            <a href="/">홈</a>
-            <a href="/feed">피드</a>
-            <a href="/breeding">사육실</a>
-            <a href="/map">곤충지도</a>
-            <a href="/market">마켓</a>
-            <a href="/forum">포럼</a>
-            <a href="/admin" style="color: #ff9800;">관제탑</a>
-        </nav>
-    </header>
-    <div class="container">
-        <div class="card" style="text-align: center; padding: 60px 20px;">
-    <h1>곤충 생태 및 매니아를 위한 가상 유토피아</h1>
-    <p style="color: var(--text-muted);">레퍼런스 플랫폼(충우, 네이처링, 카페)의 최고 기능만을 결합한 하이엔드 곤충 웹서비스</p>
-    <div class="grid" style="margin-top: 40px;">
-        <div class="card"><h3>👥 활성 유저</h3><h2><%= stats.users %> 명</h2></div>
-        <div class="card"><h3>🐛 등록 개체 및 생태데이터</h3><h2><%= stats.insectsCount %> 건</h2></div>
-        <div class="card"><h3>🛒 거래 안전 지수</h3><h2>99.8 %</h2></div>
+    <div class="main-wrapper">
+        <header>
+            <div class="logo">Hexatopia</div>
+            
+            <!-- [데스크톱] 상단 와이드 내비게이션 바 -->
+            <div class="desktop-nav">
+                <a href="/">홈</a>
+                <a href="/feed">피드</a>
+                <a href="/map">곤충지도</a>
+                <a href="/forum">포럼</a>
+                <a href="/mypage" style="border: 1px solid rgba(88,166,255,0.3); color:#58a6ff;">마이페이지</a>
+                <a href="/market" style="border: 1px solid rgba(46,160,67,0.3); color:#3fb950;">안심마켓</a>
+                <span style="font-size:12px; color:var(--text-muted); margin-left:10px;"><%= session.isLoggedIn ? session.nickname : '비회원' %></span>
+                <a href="/toggle-auth" style="background:#21262d; border:1px solid var(--border-color); padding:4px 10px; border-radius:6px; font-size:12px; text-decoration:none; color:var(--text-color); margin-left:5px;">토글</a>
+            </div>
+
+            <!-- [모바일] 우측 상단 햄버거 버튼 -->
+            <button class="hamburger-btn" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </header>
+
+        <!-- [모바일] 슬라이딩 반응형 사이드바 드로어 -->
+        <div class="sidebar-overlay" id="overlay"></div>
+        <div class="mobile-sidebar" id="sidebar">
+            <div style="padding: 10px; font-size:13px; border-bottom: 1px solid var(--border-color); color:var(--text-bold); margin-bottom:10px;">
+                <%= session.isLoggedIn ? '👤 ' + session.nickname + ' 연구원' : '로그인이 필요합니다.' %>
+            </div>
+            <a href="/">🏠 홈 구역</a>
+            <a href="/feed">📱 오픈 피드</a>
+            <a href="/map">🗺️ 생태 지도</a>
+            <a href="/forum">💬 학술 포럼</a>
+            <a href="/mypage" style="color:#58a6ff;">📊 마이페이지 [인증]</a>
+            <a href="/market" style="color:#3fb950;">🛒 안심 마켓 [인증]</a>
+            <a href="/toggle-auth" style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:20px; border: 1px dashed var(--border-color);">🔐 세션 인증 스위칭</a>
+        </div>
+
+        <div class="container">
+            <div class="card" style="text-align: center; padding: 60px 20px;">
+    <h1 style="color:var(--text-bold); font-size:2.5rem; margin-bottom:10px;">Hexatopia</h1>
+    <p style="color: var(--text-muted); font-size:1.1rem; max-width:600px; margin:0 auto 30px auto;">
+        집단지성 생태지도와 AI 혈통 시뮬레이션 시스템이 결합된 하이엔드 곤충 전용 지능형 커뮤니티 엔진
+    </p>
+    <div style="background: rgba(46,160,67,0.1); border:1px solid rgba(46,160,67,0.3); padding:15px 25px; border-radius:30px; display:inline-block; font-size:14px;">
+        현재 테스트 세션: 
+        <% if(session.isLoggedIn) { %>
+            <span style="color:#3fb950; font-weight:bold;">유헥사곤 연구원 인증 활성화</span>
+        <% } else { %>
+            <span style="color:#f85149; font-weight:bold;">게스트 상태 (일부 비공개 메뉴 차단)</span>
+        <% } %>
     </div>
 </div>
+        </div>
     </div>
+
+    <!-- 하단 고정형 모던 푸터 컴포넌트 -->
+    <footer>
+        <div class="footer-links">
+            <a href="/">이용약관</a>
+            <a href="/">개인정보처리방침</a>
+            <a href="/forum">커뮤니티 가이드라인</a>
+            <a href="/admin" style="color:#ff9800;">시스템 관제탑</a>
+        </div>
+        <div>© 2026 Hexatopia Insect Citizen Science Platform. All Rights Reserved.</div>
+    </footer>
+
+    <!-- 사이드바 슬라이딩 애니메이션 및 토글 자바스크립트 엔진 -->
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMenu() {
+            menuToggle.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+    </script>
 </body>
 </html>

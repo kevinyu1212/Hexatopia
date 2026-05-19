@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexatopia - 마이페이지 대시보드</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <!-- 암전 오버레이 레이어 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- [신설] 모바일 왼쪽에서 슬라이딩 아웃되는 서랍형 사이드바 내비게이션 -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+        <button class="close-btn" id="closeSidebarBtn">&times;</button>
+        <div style="font-size:20px; font-weight:800; color:#58a6ff; margin-bottom:10px;">Hexatopia</div>
+        <a href="/">홈 [공개]</a>
+        <a href="/feed">피드 [공개]</a>
+        <a href="/map">곤충지도 [공개]</a>
+        <a href="/forum">포럼 [공개]</a>
+        <hr style="border-color:var(--border-color); width:100%; margin:10px 0;">
+        <a href="/mypage" style="color:#58a6ff;">📊 마이페이지 [인증]</a>
+        <a href="/market" style="color:#3fb950;">🤝 안심마켓 [인증]</a>
+        <a href="/admin" style="color:#ff9800;">⚙️ 통합 관제탑</a>
+    </div>
+
+    <!-- 상단 고정 헤더 영역 -->
+    <header>
+        <a href="/" class="logo">Hexatopia</a>
+        
+        <!-- 데스크톱용 와이드 내비게이션 메뉴 바 -->
+        <nav class="desktop-nav">
+            <a href="/">홈</a>
+            <a href="/feed">피드</a>
+            <a href="/map">곤충지도</a>
+            <a href="/forum">포럼</a>
+            <a href="/mypage" style="border: 1px solid rgba(88,166,255,0.3); color:#58a6ff;">마이페이지</a>
+            <a href="/market" style="border: 1px solid rgba(46,160,67,0.3); color:#3fb950;">안심마켓</a>
+        </nav>
+
+        <!-- 모바일 화면용 3줄 햄버거 버튼 구조체 -->
+        <button class="hamburger-btn" id="hamburgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- 중앙 콘텐츠 구역 -->
+    <div class="container">
+        <div class="dashboard-layout">
+    <div class="sidebar card">
+        <h3 style="color:#58a6ff; margin-top:0;">내 계정 정보</h3>
+        <p style="font-size:14px; margin-bottom:20px; color:var(--text-muted);">등급: 우수 연구원</p>
+        <hr style="border-color:var(--border-color); margin: 15px 0;">
+        <nav style="display:flex; flex-direction:column; gap:8px; align-items: flex-start;">
+            <a href="/mypage" style="color:#58a6ff; font-weight:600; text-decoration:none;">📊 통합 대시보드</a>
+            <a href="/mypage/breeding" style="color:var(--text-color); text-decoration:none;">🔐 비밀 사육실 (족보)</a>
+            <a href="/market" style="color:var(--text-color); text-decoration:none;">🤝 내 거래 목록</a>
+        </nav>
+    </div>
+    <div class="main-content">
+        <h2 style="margin-top:0; color:var(--text-bold);"><%= profile.nickname %>님의 가상 대시보드</h2>
+        <div class="grid" style="margin-bottom: 24px;">
+            <div class="card" style="margin-bottom:0;">
+                <span style="color:var(--text-muted); font-size:14px;">작성한 사육 일지</span>
+                <h1 style="margin:10px 0 0 0; color:#58a6ff;"><%= postCount %> 개</h1>
+            </div>
+            <div class="card" style="margin-bottom:0;">
+                <span style="color:var(--text-muted); font-size:14px;">마켓 등록 유충</span>
+                <h1 style="margin:10px 0 0 0; color:#3fb950;"><%= marketCount %> 건</h1>
+            </div>
+        </div>
+        <div class="card" style="background: rgba(56, 139, 253, 0.05); border-color: rgba(56, 139, 253, 0.2);">
+            <h3 style="color:#58a6ff; margin-top:0;">🛡️ 데이터 보안 무결성 상태</h3>
+            <p style="font-size:14px; margin:0; color:var(--text-muted);">귀하가 보유한 희귀 개체의 혈통 데이터 및 g(그램) 측정 일지는 군사용에 준하는 격리 컨테이너 내부망에 안전하게 암호화 보존 처리되어 있습니다.</p>
+        </div>
+    </div>
+</div>
+    </div>
+
+    <!-- [신설] 유저 정보 가이드 및 저작권 명시 하단 반응형 푸터 컴포넌트 -->
+    <footer>
+        <div class="footer-content">
+            <div>
+                <strong style="color:var(--text-bold); font-size:15px;">Hexatopia Platform</strong>
+                <p style="margin:5px 0 0 0; color:var(--text-muted);">레퍼런스 오픈채팅방 Exo:Public 기반 차세대 스마트 곤충 아카이빙 엔진</p>
+            </div>
+            <div class="footer-links">
+                <a href="#">이용약관</a>
+                <a href="#">개인정보처리방침</a>
+                <a href="/toggle-auth" style="color:#ff9800;">[디버그] 인증 강제전환 스위치</a>
+            </div>
+        </div>
+        <div style="max-width:1400px; margin:20px auto 0 auto; border-top:1px solid #21262d; padding-top:15px; color:#6e7681; font-size:12px;">
+            &copy; 2026 Hexatopia Inc. All data pipelines and AI logic secured.
+        </div>
+    </footer>
+
+    <!-- 햄버거 메뉴 구동을 위한 고속 UI 상태 토글러 바닐라 스크립트 -->
+    <script>
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const mobileSidebar = document.getElementById('mobileSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            mobileSidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        }
+
+        hamburgerBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+    </script>
+</body>
+</html>
