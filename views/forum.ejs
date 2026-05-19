@@ -2,38 +2,133 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Hexatopia - 포럼</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexatopia - 학술 포럼</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .section-title { font-size: 20px; font-weight: 700; color: var(--text-bold); margin: 30px 0 15px 0; display: flex; align-items: center; gap: 8px; }
+        .live-indicator { width: 8px; height: 8px; background: #3fb950; border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+        .list-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .auth-btn-group { display: flex; gap: 8px; align-items: center; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+        .btn-login { background: transparent; color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn-login:hover { color: var(--text-bold); background: rgba(255,255,255,0.05); }
+        .btn-register { background: #2da44e; color: #fff; border: 1px solid transparent; }
+        .btn-register:hover { background: #2c974b; }
+        .btn-logout { background: rgba(248,81,73,0.1); color: #f85149; border: 1px solid rgba(248,81,73,0.2); }
+        .btn-logout:hover { background: rgba(248,81,73,0.2); }
+    </style>
 </head>
 <body>
-    <header>
-        <div style="font-size: 24px; font-weight: bold; color: #4caf50;">Hexatopia 헥사토피아</div>
-        <nav>
-            <a href="/">홈</a>
-            <a href="/feed">피드</a>
-            <a href="/breeding">사육실</a>
-            <a href="/map">곤충지도</a>
-            <a href="/market">마켓</a>
-            <a href="/forum">포럼</a>
-            <a href="/admin" style="color: #ff9800;">관제탑</a>
-        </nav>
-    </header>
-    <div class="container">
-        <h2>포럼 & 곤충 학술 정보</h2>
-<div class="grid">
-    <div class="card">
-        <h3>🌱 초보자 Q&A</h3>
-        <p style="color:var(--text-muted);">"사슴벌레가 톱밥 속에서 안 나와요" 같은 입문자 질문에 고수들이 답변을 매칭해 줍니다.</p>
-    </div>
-    <div class="card">
-        <h3>🔬 곤충 학술 정보</h3>
-        <p style="color:var(--text-muted);">국내외 논문 요약, 신종/미기록종 기록, 형태학적 데이터베이스 아카이빙.</p>
-    </div>
-    <div class="card">
-        <h3>📌 표본 제작 및 갤러리</h3>
-        <p style="color:var(--text-muted);">건식 표본, 디오라마 제작 가이드, 연화 작업 노하우 공유 공간.</p>
-    </div>
+    <div class="main-wrapper">
+        <!-- 통일화된 고도화 반응형 헤더 바 -->
+        <header>
+            <div class="logo" onclick="location.href='/'" style="cursor:pointer;">Hexatopia</div>
+            
+            <!-- [데스크톱 전용 전면 메뉴바]: 너비 축소 시 CSS에 의해 자동 완벽 은닉 -->
+            <div class="desktop-nav">
+                <a href="/">홈</a>
+                <a href="/feed">피드</a>
+                <a href="/map">곤충지도</a>
+                <a href="/forum">포럼</a>
+                <a href="/mypage" style="border: 1px solid rgba(88,166,255,0.2); color:#58a6ff;">마이페이지</a>
+                <a href="/market" style="border: 1px solid rgba(46,160,67,0.2); color:#3fb950;">안심마켓</a>
+                
+                <!-- 데스크톱 전용 세션 버튼 분기 -->
+                <div class="auth-btn-group" style="margin-left: 15px; border-left: 1px solid var(--border-color); padding-left: 15px;">
+                    <% if (session.isLoggedIn) { %>
+                        <span style="font-size:13px; color:var(--text-muted); margin-right:5px;">👤 <strong><%= session.nickname %></strong>님</span>
+                        <a href="/toggle-auth" class="btn-sm btn-logout">로그아웃</a>
+                    <% } else { %>
+                        <a href="/toggle-auth" class="btn-sm btn-login">로그인</a>
+                        <a href="/toggle-auth" class="btn-sm btn-register">회원가입</a>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- [모바일 전용 우측 최상단 햄버거 버튼] -->
+            <button class="hamburger-btn" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </header>
+
+        <!-- [모바일 전용 반응형 슬라이딩 사이드바 드로어] -->
+        <div class="sidebar-overlay" id="overlay"></div>
+        <div class="mobile-sidebar" id="sidebar">
+            <!-- 모바일 내비게이션 세션 프로필 영역 -->
+            <div style="padding-bottom: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;">
+                <% if (session.isLoggedIn) { %>
+                    <div style="font-size:15px; color:var(--text-bold); font-weight:700;">👤 <%= session.nickname %> 연구원</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">인증 등급: 일반 멤버</div>
+                <% } else { %>
+                    <div style="font-size:14px; color:var(--text-muted);">로그인이 필요합니다.</div>
+                <% } %>
+            </div>
+
+            <!-- 데스크톱에서 완전히 수납되어 이동해 온 전체 메뉴 링크셋 -->
+            <a href="/">🏠 홈 대시보드</a>
+            <a href="/feed">📱 오픈 피드</a>
+            <a href="/map">🗺️ 시민과학 지도</a>
+            <a href="/forum">💬 학술 포럼</a>
+            <a href="/mypage" style="color:#58a6ff;">📊 마이페이지 [인증]</a>
+            <a href="/market" style="color:#3fb950;">🛒 안심 마켓 [인증]</a>
+
+            <!-- 모바일 전용 하단 고정 로그인/회원가입 버튼 그룹 -->
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <% if (session.isLoggedIn) { %>
+                    <a href="/toggle-auth" class="btn-sm btn-logout" style="text-align:center; padding:12px;">로그아웃 (세션 종료)</a>
+                <% } else { %>
+                    <a href="/toggle-auth" class="btn-sm btn-login" style="text-align:center; padding:12px;">로그인</a>
+                    <a href="/toggle-auth" class="btn-sm btn-register" style="text-align:center; padding:12px;">새 연구원 등록 (회원가입)</a>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- 본문 핵심 영역 컨테이너 -->
+        <div class="container">
+            <div class="section-title">💬 대안 학술 포럼 연구소</div>
+<div class="card" style="text-align:center; padding:40px;">
+    <h2 style="color:var(--text-bold); margin-top:0;">준비 중인 교류 세션입니다</h2>
+    <p style="color:var(--text-muted); font-size:14px;">전문 브리더 및 학술 연구원들을 위한 심층 토론장이 곧 개설됩니다.</p>
 </div>
+        </div>
     </div>
+
+    <!-- 하단 통일 푸터 컴포넌트 -->
+    <footer>
+        <div class="footer-links">
+            <a href="/">이용약관</a>
+            <a href="/">개인정보처리방침</a>
+            <a href="/forum">커뮤니티 가이드라인</a>
+            <a href="/admin" style="color:#ff9800;">관제탑</a>
+        </div>
+        <div>© 2026 Hexatopia Insect Citizen Science Platform. All Rights Reserved.</div>
+    </footer>
+
+    <!-- 반응형 제어 자바스크립트 내장 엔진 -->
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMenu() {
+            menuToggle.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // 이스케이프 클로즈 (화면 확장시 예외 레이어 초기화)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768 && sidebar.classList.contains('active')) {
+                toggleMenu();
+            }
+        });
+    </script>
 </body>
 </html>

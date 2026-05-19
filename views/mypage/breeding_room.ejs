@@ -3,134 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hexatopia - 내 사육실</title>
+    <title>Hexatopia - AI 스마트 사육실</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .section-title { font-size: 20px; font-weight: 700; color: var(--text-bold); margin: 30px 0 15px 0; display: flex; align-items: center; gap: 8px; }
+        .live-indicator { width: 8px; height: 8px; background: #3fb950; border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+        .list-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .auth-btn-group { display: flex; gap: 8px; align-items: center; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+        .btn-login { background: transparent; color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn-login:hover { color: var(--text-bold); background: rgba(255,255,255,0.05); }
+        .btn-register { background: #2da44e; color: #fff; border: 1px solid transparent; }
+        .btn-register:hover { background: #2c974b; }
+        .btn-logout { background: rgba(248,81,73,0.1); color: #f85149; border: 1px solid rgba(248,81,73,0.2); }
+        .btn-logout:hover { background: rgba(248,81,73,0.2); }
+    </style>
 </head>
 <body>
+    <div class="main-wrapper">
+        <!-- 통일화된 고도화 반응형 헤더 바 -->
+        <header>
+            <div class="logo" onclick="location.href='/'" style="cursor:pointer;">Hexatopia</div>
+            
+            <!-- [데스크톱 전용 전면 메뉴바]: 너비 축소 시 CSS에 의해 자동 완벽 은닉 -->
+            <div class="desktop-nav">
+                <a href="/">홈</a>
+                <a href="/feed">피드</a>
+                <a href="/map">곤충지도</a>
+                <a href="/forum">포럼</a>
+                <a href="/mypage" style="border: 1px solid rgba(88,166,255,0.2); color:#58a6ff;">마이페이지</a>
+                <a href="/market" style="border: 1px solid rgba(46,160,67,0.2); color:#3fb950;">안심마켓</a>
+                
+                <!-- 데스크톱 전용 세션 버튼 분기 -->
+                <div class="auth-btn-group" style="margin-left: 15px; border-left: 1px solid var(--border-color); padding-left: 15px;">
+                    <% if (session.isLoggedIn) { %>
+                        <span style="font-size:13px; color:var(--text-muted); margin-right:5px;">👤 <strong><%= session.nickname %></strong>님</span>
+                        <a href="/toggle-auth" class="btn-sm btn-logout">로그아웃</a>
+                    <% } else { %>
+                        <a href="/toggle-auth" class="btn-sm btn-login">로그인</a>
+                        <a href="/toggle-auth" class="btn-sm btn-register">회원가입</a>
+                    <% } %>
+                </div>
+            </div>
 
-    <!-- 암전 오버레이 레이어 -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+            <!-- [모바일 전용 우측 최상단 햄버거 버튼] -->
+            <button class="hamburger-btn" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </header>
 
-    <!-- [신설] 모바일 왼쪽에서 슬라이딩 아웃되는 서랍형 사이드바 내비게이션 -->
-    <div class="mobile-sidebar" id="mobileSidebar">
-        <button class="close-btn" id="closeSidebarBtn">&times;</button>
-        <div style="font-size:20px; font-weight:800; color:#58a6ff; margin-bottom:10px;">Hexatopia</div>
-        <a href="/">홈 [공개]</a>
-        <a href="/feed">피드 [공개]</a>
-        <a href="/map">곤충지도 [공개]</a>
-        <a href="/forum">포럼 [공개]</a>
-        <hr style="border-color:var(--border-color); width:100%; margin:10px 0;">
-        <a href="/mypage" style="color:#58a6ff;">📊 마이페이지 [인증]</a>
-        <a href="/market" style="color:#3fb950;">🤝 안심마켓 [인증]</a>
-        <a href="/admin" style="color:#ff9800;">⚙️ 통합 관제탑</a>
-    </div>
-
-    <!-- 상단 고정 헤더 영역 -->
-    <header>
-        <a href="/" class="logo">Hexatopia</a>
-        
-        <!-- 데스크톱용 와이드 내비게이션 메뉴 바 -->
-        <nav class="desktop-nav">
-            <a href="/">홈</a>
-            <a href="/feed">피드</a>
-            <a href="/map">곤충지도</a>
-            <a href="/forum">포럼</a>
-            <a href="/mypage" style="border: 1px solid rgba(88,166,255,0.3); color:#58a6ff;">마이페이지</a>
-            <a href="/market" style="border: 1px solid rgba(46,160,67,0.3); color:#3fb950;">안심마켓</a>
-        </nav>
-
-        <!-- 모바일 화면용 3줄 햄버거 버튼 구조체 -->
-        <button class="hamburger-btn" id="hamburgerBtn">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-    </header>
-
-    <!-- 중앙 콘텐츠 구역 -->
-    <div class="container">
-        <div class="dashboard-layout">
-    <div class="sidebar card">
-        <h3 style="color:#58a6ff; margin-top:0;">내 계정 정보</h3>
-        <p style="font-size:14px; margin-bottom:20px; color:var(--text-muted);">등급: 우수 연구원</p>
-        <hr style="border-color:var(--border-color); margin: 15px 0;">
-        <nav style="display:flex; flex-direction:column; gap:8px; align-items: flex-start;">
-            <a href="/mypage" style="color:var(--text-color); text-decoration:none;">📊 통합 대시보드</a>
-            <a href="/mypage/breeding" style="color:#58a6ff; font-weight:600; text-decoration:none;">🔐 비밀 사육실 (족보)</a>
-            <a href="/market" style="color:var(--text-color); text-decoration:none;">🤝 내 거래 목록</a>
-        </nav>
-    </div>
-    <div class="main-content">
-        <h2 style="margin-top:0; color:var(--text-bold);">🔐 비공개 개인 사육실</h2>
-        <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;">이곳의 기록 데이터는 선택적 전송(Export) 전까지 외부에 완전히 노출되지 않습니다.</p>
-        
-        <div class="grid">
-            <div class="card" style="margin-bottom:0;">
-                <h3 style="color:#58a6ff; margin-top:0;">🧬 AI 가계도 시뮬레이션</h3>
-                <form action="/mypage/breeding/analyze" method="POST">
-                    <input type="text" name="parentA_line" placeholder="수컷 부모 혈통 (ex: 독도라인)" required>
-                    <input type="text" name="parentB_line" placeholder="암컷 부모 혈통 (ex: 강원와일드)" required>
-                    <button type="submit">AI 유전적 위험도 연산</button>
-                </form>
-                <% if (aiAnalysis) { %>
-                    <div class="ai-box">
-                        <strong>🛡️ 가상 교배 연산 결과:</strong> <%= aiAnalysis.riskLevel %><br>
-                        <p style="margin:5px 0 0 0; font-size:13px; color:var(--text-color);"><%= aiAnalysis.message %></p>
-                    </div>
+        <!-- [모바일 전용 반응형 슬라이딩 사이드바 드로어] -->
+        <div class="sidebar-overlay" id="overlay"></div>
+        <div class="mobile-sidebar" id="sidebar">
+            <!-- 모바일 내비게이션 세션 프로필 영역 -->
+            <div style="padding-bottom: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;">
+                <% if (session.isLoggedIn) { %>
+                    <div style="font-size:15px; color:var(--text-bold); font-weight:700;">👤 <%= session.nickname %> 연구원</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">인증 등급: 일반 멤버</div>
+                <% } else { %>
+                    <div style="font-size:14px; color:var(--text-muted);">로그인이 필요합니다.</div>
                 <% } %>
             </div>
-            
-            <div class="card" style="margin-bottom:0;">
-                <h3 style="color:#3fb950; margin-top:0;">🐛 사육실 관리 족보</h3>
-                <% records.forEach(rec => { %>
-                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); padding:16px; border-radius:8px; margin-bottom:12px;">
-                        <strong style="color:var(--text-bold); font-size:15px;"><%= rec.name %></strong> <span class="badge success"><%= rec.generation %></span>
-                        <p style="font-size:13px; color:var(--text-muted); margin:6px 0;">혈통 정보: <%= rec.lineage %> | 현 체중: <%= rec.weight %></p>
-                        <form action="/mypage/breeding/export-market" method="POST" style="margin-top:10px;">
-                            <input type="hidden" name="recordId" value="<%= rec.id %>">
-                            <button type="submit" style="background:#21262d; border:1px solid var(--border-color); font-size:12px; padding:6px 10px;">이 데이터 마켓으로 연동 반출 ↑</button>
-                        </form>
-                    </div>
-                <% }) %>
+
+            <!-- 데스크톱에서 완전히 수납되어 이동해 온 전체 메뉴 링크셋 -->
+            <a href="/">🏠 홈 대시보드</a>
+            <a href="/feed">📱 오픈 피드</a>
+            <a href="/map">🗺️ 시민과학 지도</a>
+            <a href="/forum">💬 학술 포럼</a>
+            <a href="/mypage" style="color:#58a6ff;">📊 마이페이지 [인증]</a>
+            <a href="/market" style="color:#3fb950;">🛒 안심 마켓 [인증]</a>
+
+            <!-- 모바일 전용 하단 고정 로그인/회원가입 버튼 그룹 -->
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <% if (session.isLoggedIn) { %>
+                    <a href="/toggle-auth" class="btn-sm btn-logout" style="text-align:center; padding:12px;">로그아웃 (세션 종료)</a>
+                <% } else { %>
+                    <a href="/toggle-auth" class="btn-sm btn-login" style="text-align:center; padding:12px;">로그인</a>
+                    <a href="/toggle-auth" class="btn-sm btn-register" style="text-align:center; padding:12px;">새 연구원 등록 (회원가입)</a>
+                <% } %>
             </div>
         </div>
-    </div>
+
+        <!-- 본문 핵심 영역 컨테이너 -->
+        <div class="container">
+            <div class="section-title">🧬 AI 스마트 혈통 관리 사육실</div>
+<div class="grid">
+    <% records.forEach(rec => { %>
+        <div class="card" style="margin:0;">
+            <div style="font-size:12px; color:var(--text-muted);"><%= rec.id %> • <%= rec.generation %></div>
+            <h3 style="color:var(--text-bold); margin:5px 0;"><%= rec.name %></h3>
+            <div class="list-item" style="margin-top:15px; padding:6px 12px;"><span>누대 계보</span><span style="color:#58a6ff;"><%= rec.lineage %></span></div>
+            <div class="list-item" style="padding:6px 12px; margin-bottom:0;"><span>현재 체중</span><span style="color:#3fb950; font-weight:bold;"><%= rec.weight %></span></div>
+        </div>
+    <% }) %>
 </div>
+        </div>
     </div>
 
-    <!-- [신설] 유저 정보 가이드 및 저작권 명시 하단 반응형 푸터 컴포넌트 -->
+    <!-- 하단 통일 푸터 컴포넌트 -->
     <footer>
-        <div class="footer-content">
-            <div>
-                <strong style="color:var(--text-bold); font-size:15px;">Hexatopia Platform</strong>
-                <p style="margin:5px 0 0 0; color:var(--text-muted);">레퍼런스 오픈채팅방 Exo:Public 기반 차세대 스마트 곤충 아카이빙 엔진</p>
-            </div>
-            <div class="footer-links">
-                <a href="#">이용약관</a>
-                <a href="#">개인정보처리방침</a>
-                <a href="/toggle-auth" style="color:#ff9800;">[디버그] 인증 강제전환 스위치</a>
-            </div>
+        <div class="footer-links">
+            <a href="/">이용약관</a>
+            <a href="/">개인정보처리방침</a>
+            <a href="/forum">커뮤니티 가이드라인</a>
+            <a href="/admin" style="color:#ff9800;">관제탑</a>
         </div>
-        <div style="max-width:1400px; margin:20px auto 0 auto; border-top:1px solid #21262d; padding-top:15px; color:#6e7681; font-size:12px;">
-            &copy; 2026 Hexatopia Inc. All data pipelines and AI logic secured.
-        </div>
+        <div>© 2026 Hexatopia Insect Citizen Science Platform. All Rights Reserved.</div>
     </footer>
 
-    <!-- 햄버거 메뉴 구동을 위한 고속 UI 상태 토글러 바닐라 스크립트 -->
+    <!-- 반응형 제어 자바스크립트 내장 엔진 -->
     <script>
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-        const mobileSidebar = document.getElementById('mobileSidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
 
-        function toggleSidebar() {
-            mobileSidebar.classList.toggle('active');
-            sidebarOverlay.classList.toggle('active');
+        function toggleMenu() {
+            menuToggle.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         }
 
-        hamburgerBtn.addEventListener('click', toggleSidebar);
-        closeSidebarBtn.addEventListener('click', toggleSidebar);
-        sidebarOverlay.addEventListener('click', toggleSidebar);
+        menuToggle.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // 이스케이프 클로즈 (화면 확장시 예외 레이어 초기화)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768 && sidebar.classList.contains('active')) {
+                toggleMenu();
+            }
+        });
     </script>
 </body>
 </html>
