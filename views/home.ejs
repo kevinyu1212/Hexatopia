@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hexatopia - 메인 대시보관</title>
+    <title>Hexatopia - 메인 대시보드</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .section-title { font-size: 18px; font-weight: 700; color: var(--text-bold); margin: 35px 0 15px 0; display: flex; align-items: center; gap: 8px; }
         .live-indicator { width: 8px; height: 8px; background: #3fb950; border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        
+        /* 모달 오버레이 공통 엔지니어링 */
+        .auth-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 360px; background-color: #161b22; border: 1px solid var(--border-color); border-radius: 12px; z-index: 2000; padding: 24px; box-sizing: border-box; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        .auth-modal.active { display: block; }
+        .auth-modal h3 { margin-top: 0; color: var(--text-bold); font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .auth-modal .close-x { cursor: pointer; color: var(--text-muted); font-size: 18px; }
+        .auth-modal input { width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 14px; background: #0d1117; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-bold); box-sizing: border-box; font-size: 14px; }
+        .auth-modal button { width: 100%; padding: 10px; font-weight: bold; font-size: 14px; margin-top: 4px; }
+        .modal-switcher { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 14px; }
+        .modal-switcher span { color: #58a6ff; cursor: pointer; text-decoration: underline; margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -19,9 +29,9 @@
             <div class="header-right">
                 <% if (session.isLoggedIn) { %>
                     <span style="font-size:13px; color:var(--text-muted); display:inline-block; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle;">👤 <%= session.nickname %></span>
-                    <a href="/toggle-auth" class="btn-auth-combined" style="color: #f85149; border-color: rgba(248,81,73,0.3);">로그아웃</a>
+                    <a href="/auth/logout" class="btn-auth-combined" style="color: #f85149; border-color: rgba(248,81,73,0.3);">로그아웃</a>
                 <% } else { %>
-                    <a href="/toggle-auth" class="btn-auth-combined">로그인 / 회원가입</a>
+                    <button class="btn-auth-combined" onclick="openAuthModal('login')">로그인 / 회원가입</button>
                 <% } %>
 
                 <button class="hamburger-btn" id="menuToggle">
@@ -32,7 +42,7 @@
 
         <div class="sidebar-overlay" id="overlay"></div>
         <div class="mobile-sidebar" id="sidebar">
-            <div style="padding-bottom: 12px; border-bottom: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-muted); letter-spacing: 0.5px;">
+            <div style="padding-bottom: 12px; border-bottom: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-muted);">
                 HEXATOPIA NAVIGATION
             </div>
             <a href="/">🏠 홈 대시보드</a>
@@ -41,6 +51,51 @@
             <a href="/forum">💬 대안 학술 포럼</a>
             <a href="/mypage">📊 관제 마이페이지</a>
             <a href="/market">🛒 AI 안심 분양 마켓</a>
+            <% if (session.isLoggedIn) { %>
+                <hr style="border-color: var(--border-color); margin: 10px 0;">
+                <button onclick="requestWithdrawal()" style="background: none; border: none; color: #f85149; text-align: left; padding: 12px; font-size: 14px; cursor: pointer; width: 100%;">🚪 영구 회원탈퇴</button>
+            <% } %>
+        </div>
+
+        <div class="auth-modal" id="loginModal">
+            <h3>로그인 <span class="close-x" onclick="closeAllModals()">&times;</span></h3>
+            <form id="loginForm" onsubmit="handleAuthSubmit(event, '/auth/login')">
+                <label style="font-size:12px; color:var(--text-muted);">가입 아이디</label>
+                <input type="text" name="username" required placeholder="아이디를 입력하세요">
+                <label style="font-size:12px; color:var(--text-muted);">비밀번호</label>
+                <input type="password" name="password" required placeholder="••••••••">
+                <button type="submit" class="btn-register" style="background:#58a6ff;">연구소 입장</button>
+            </form>
+            <div class="modal-switcher">아직 계정이 없으신가요?<span onclick="openAuthModal('register')">회원가입</span></div>
+            <div class="modal-switcher" style="margin-top:6px;">비밀번호를 분실하셨나요?<span onclick="openAuthModal('find')">계정 찾기</span></div>
+        </div>
+
+        <div class="auth-modal" id="registerModal">
+            <h3>새 연구원 등록 <span class="close-x" onclick="closeAllModals()">&times;</span></h3>
+            <form id="registerForm" onsubmit="handleAuthSubmit(event, '/auth/register')">
+                <label style="font-size:12px; color:var(--text-muted);">사용할 아이디</label>
+                <input type="text" name="username" required placeholder="알파벳/숫자 조합">
+                <label style="font-size:12px; color:var(--text-muted);">비밀번호</label>
+                <input type="password" name="password" required placeholder="••••••••">
+                <label style="font-size:12px; color:var(--text-muted);">연구원 활동 닉네임</label>
+                <input type="text" name="nickname" required placeholder="예: 곤충박사">
+                <label style="font-size:12px; color:var(--text-muted);">비밀번호 찾기 힌트 (가장 좋아하는 곤충은?)</label>
+                <input type="text" name="hint" required placeholder="예: 사슴벌레">
+                <button type="submit" class="btn-register">회원가입 완료</button>
+            </form>
+            <div class="modal-switcher">이미 계정이 있으신가요?<span onclick="openAuthModal('login')">로그인하기</span></div>
+        </div>
+
+        <div class="auth-modal" id="findModal">
+            <h3>계정 및 암호 찾기 <span class="close-x" onclick="closeAllModals()">&times;</span></h3>
+            <form id="findForm" onsubmit="handleAuthSubmit(event, '/auth/find')">
+                <label style="font-size:12px; color:var(--text-muted);">확인할 가입 아이디</label>
+                <input type="text" name="username" required placeholder="아이디를 입력하세요">
+                <label style="font-size:12px; color:var(--text-muted);">비밀번호 힌트 답안 (가장 좋아하는 곤충은?)</label>
+                <input type="text" name="hint" required placeholder="가입 시 지정한 답안">
+                <button type="submit" class="btn-register" style="background:#ff9800;">데이터 무결성 조회</button>
+            </form>
+            <div class="modal-switcher">기억이 나셨나요?<span onclick="openAuthModal('login')">로그인으로 복귀</span></div>
         </div>
 
         <div class="container">
@@ -52,7 +107,7 @@
                 <div class="grid">
                     <div class="card" style="margin:0; padding:15px; background:rgba(255,255,255,0.01);"><span style="color:var(--text-muted); font-size:13px;">정회원 수</span><h2 style="margin:5px 0 0 0; color:#58a6ff;"><%= stats.users %> 명</h2></div>
                     <div class="card" style="margin:0; padding:15px; background:rgba(255,255,255,0.01);"><span style="color:var(--text-muted); font-size:13px;">아카이빙 개체</span><h2 style="margin:5px 0 0 0; color:#3fb950;"><%= stats.insectsCount %> 령</h2></div>
-                    <div class="card" style="margin:0; padding:15px; background:rgba(255,255,255,0.01);"><span style="color:var(--text-muted); font-size:13px;">월간 거래 안전도</span><h2 style="margin:5px 0 0 0; color:#ff9800;">99.9 %</h2></div>
+                    <div class="card" style="margin:0; padding:15px; background:rgba(255,255,255,0.01);"><span style="color:var(--text-muted); font-size:13px;">월간 거래 안전도</span><h2 style="margin:5px 0 0 0; color:#ff9800;"><%= stats.marketVolume %></h2></div>
                 </div>
             </div>
 
@@ -114,7 +169,6 @@
             <a href="/">이용약관</a>
             <a href="/">개인정보처리방침</a>
             <a href="/forum">가이드라인</a>
-            <a href="/admin" style="color:#ff9800;">관제탑</a>
         </div>
         <div>© 2026 Hexatopia Insect Citizen Science Platform. All Rights Reserved.</div>
     </footer>
@@ -128,9 +182,62 @@
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
         }
-
         menuToggle.addEventListener('click', toggleMenu);
-        overlay.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', () => {
+            toggleMenu();
+            closeAllModals();
+        });
+
+        // 모달 상태 기하학적 제어 스위치
+        function openAuthModal(type) {
+            closeAllModals();
+            overlay.classList.add('active');
+            if(type === 'login') document.getElementById('loginModal').classList.add('active');
+            if(type === 'register') document.getElementById('registerModal').classList.add('active');
+            if(type === 'find') document.getElementById('findModal').classList.add('active');
+        }
+
+        function closeAllModals() {
+            document.getElementById('loginModal').classList.remove('active');
+            document.getElementById('registerModal').classList.remove('active');
+            document.getElementById('findModal').classList.remove('active');
+            if(!sidebar.classList.contains('active')) {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // 통합 비동기 AJAX 제출 처리 로직 (패스 성공 시 강제 릴리즈)
+        function handleAuthSubmit(event, url) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(resData => {
+                alert(resData.message);
+                if (resData.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(err => alert("통신 중 장애가 발생했습니다."));
+        }
+
+        // 회원 탈퇴 엔드포인트 바인딩
+        function requestWithdrawal() {
+            if (confirm("정말로 Hexatopia 연구원 계정을 삭제하시겠습니까?\n삭제된 누대 데이터 및 모든 이력은 복구 불가능합니다.")) {
+                fetch('/auth/withdraw', { method: 'POST' })
+                .then(res => res.json())
+                .then(resData => {
+                    alert(resData.message);
+                    if (resData.success) window.location.href = '/';
+                });
+            }
+        }
     </script>
 </body>
 </html>
