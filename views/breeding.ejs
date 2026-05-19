@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexatopia - 사육실</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div style="font-size: 24px; font-weight: bold; color: #4caf50;">Hexatopia 헥사토피아</div>
+        <nav>
+            <a href="/">홈</a>
+            <a href="/feed">피드</a>
+            <a href="/breeding">사육실</a>
+            <a href="/map">곤충지도</a>
+            <a href="/market">마켓</a>
+            <a href="/forum">포럼</a>
+            <a href="/admin" style="color: #ff9800;">관제탑</a>
+        </nav>
+    </header>
+    <div class="container">
+        <h2>내 사육실 (My Breeding Room)</h2>
+<div class="grid">
+    <div class="card">
+        <h3>🧬 AI 혈통 근친 매팅 분석기</h3>
+        <form action="/breeding/analyze" method="POST">
+            <label>수컷 부모 혈통 (Father Line)</label>
+            <input type="text" name="parentA_line" placeholder="예: 독도혈통" required>
+            <label>암컷 부모 혈통 (Mother Line)</label>
+            <input type="text" name="parentB_line" placeholder="예: 독도혈통" required>
+            <button type="submit">AI 유전 시뮬레이션 가동</button>
+        </form>
+        
+        <% if (aiAnalysis) { %>
+            <div class="ai-box" style="margin-top:15px;">
+                <strong>[AI 예측 결과]</strong> 위험도: <%= aiAnalysis.riskLevel %><br>
+                <p><%= aiAnalysis.message %></p>
+            </div>
+        <% } %>
+    </div>
+
+    <div class="card">
+        <h3>📊 관리 중인 개체 족보</h3>
+        <% records.forEach(rec => { %>
+            <div style="background:#252525; padding:10px; border-radius:6px; margin-bottom:10px;">
+                <h4><%= rec.name %> (<%= rec.generation %>)</h4>
+                <p style="font-size:14px; margin:2px 0;">라인/혈통: <%= rec.lineage %> | 체중: <%= rec.weight %></p>
+            </div>
+        <% }) %>
+    </div>
+</div>
+    </div>
+</body>
+</html>

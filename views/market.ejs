@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexatopia - 마켓</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div style="font-size: 24px; font-weight: bold; color: #4caf50;">Hexatopia 헥사토피아</div>
+        <nav>
+            <a href="/">홈</a>
+            <a href="/feed">피드</a>
+            <a href="/breeding">사육실</a>
+            <a href="/map">곤충지도</a>
+            <a href="/market">마켓</a>
+            <a href="/forum">포럼</a>
+            <a href="/admin" style="color: #ff9800;">관제탑</a>
+        </nav>
+    </header>
+    <div class="container">
+        <h2>안심 분양 마켓 <span style="font-size:14px; color:var(--text-muted);">[AI 사기 예방 거래 필터링 탑재]</span></h2>
+<div class="grid">
+    <div class="card">
+        <h3>📦 개체 분양 등록하기</h3>
+        <form action="/market/write" method="POST">
+            <input type="text" name="title" placeholder="글 제목 (예: 왕사슴벌레 극태 균사유충)" required>
+            <input type="number" name="price" placeholder="분양 가격(원)" required>
+            <textarea name="content" rows="4" placeholder="내용 기재 (허위 기재나 금지어 유도 시 AI 시스템에 의해 자동 블로킹됩니다)" required></textarea>
+            <button type="submit">등록 신청</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>🛒 실시간 분양 리스트</h3>
+        <% items.forEach(item => { %>
+            <div style="background:#252525; padding:15px; border-radius:8px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:between; align-items:center;">
+                    <h4><%= item.title %></h4>
+                </div>
+                <p style="margin:5px 0;">가격: <strong><%= item.price %> 원</strong> | 분양자: <%= item.seller %></p>
+                <span class="badge <%= item.status.includes('보류') ? 'danger' : 'success' %>"><%= item.status %></span>
+                <span class="badge" style="background:#444;"><%= item.aiChecked %></span>
+            </div>
+        <% }) %>
+    </div>
+</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+﻿:root {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --accent-color: #4caf50;
+    --text-color: #ffffff;
+    --text-muted: #aaaaaa;
+    --border-color: #333333;
+}
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0;
+}
+header {
+    background-color: #000;
+    padding: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+header a { color: var(--text-color); text-decoration: none; margin: 0 15px; font-weight: bold; }
+header a:hover { color: var(--accent-color); }
+.container { padding: 40px; max-width: 1200px; margin: 0 auto; }
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 20px; margin-bottom: 20px;
+}
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+input, textarea, select {
+    width: 100%; padding: 12px; background-color: #2a2a2a; color: white;
+    border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 15px; box-sizing: border-box;
+}
+button {
+    background-color: var(--accent-color); color: white; padding: 12px 24px;
+    border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+button:hover { opacity: 0.9; }
+.ai-box { background-color: #1a2a1a; border: 1px solid #2e7d32; border-radius: 8px; padding: 15px; color: #a5d6a7; }
+.badge { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+.badge.danger { background: #c62828; }
+.badge.success { background: #2e7d32; }

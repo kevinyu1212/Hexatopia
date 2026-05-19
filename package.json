@@ -1,0 +1,14 @@
+﻿{
+  "name": "hexatopia",
+  "version": "1.0.0",
+  "description": "곤충 전용 커뮤니티 웹 플랫폼",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "body-parser": "^1.20.2"
+  }
+}

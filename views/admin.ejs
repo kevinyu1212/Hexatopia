@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexatopia - 관리자 시스템</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div style="font-size: 24px; font-weight: bold; color: #4caf50;">Hexatopia 헥사토피아</div>
+        <nav>
+            <a href="/">홈</a>
+            <a href="/feed">피드</a>
+            <a href="/breeding">사육실</a>
+            <a href="/map">곤충지도</a>
+            <a href="/market">마켓</a>
+            <a href="/forum">포럼</a>
+            <a href="/admin" style="color: #ff9800;">관제탑</a>
+        </nav>
+    </header>
+    <div class="container">
+        <h2>통합 AI 관제 및 중앙 백오피스 대시보드</h2>
+<div class="grid">
+    <div class="card" style="grid-column: span 2;">
+        <h3>🤖 실시간 AI 에이전트 활동 로그</h3>
+        <div style="background:#000; font-family:monospace; padding:15px; border-radius:6px; color:#00ff00;">
+            <% logs.forEach(log => { %>
+                [<%= log.time %>] [<%= log.type %>] <%= log.desc %><br>
+            <% }) %>
+            [시스템 안정] 트래픽 이상 없음. 보안 노드 방화벽 정상 가동 중.
+        </div>
+    </div>
+    <div class="card">
+        <h3>⚙️ 관제 항목</h3>
+        <ul>
+            <li>회원 권한/등급 이상 징후 강등</li>
+            <li>마켓 허위 매물(체장 사기) 추적</li>
+            <li>지도 위치 데이터 좌표 마스킹 서버 검증</li>
+        </ul>
+    </div>
+</div>
+    </div>
+</body>
+</html>
