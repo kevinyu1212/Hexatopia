@@ -1,8 +1,8 @@
 ﻿const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
+const mysql = require('mysql2/promise');
 
 const app = express();
 const PORT = 3000;
@@ -13,37 +13,40 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// JSON 파일 데이터베이스 경로 설정
-const USER_DB_PATH = path.join(__dirname, 'users.json');
+// ==========================================
+// 1. MySQL 커넥션 풀(Connection Pool) 환경 설정
+// ==========================================
+const dbPool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '1234',  // 요청하신 비밀번호로 연동 완료
+    database: 'hexatopia_db',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
-// 파일 DB 초기화 및 안전성 검증
-if (!fs.existsSync(USER_DB_PATH)) {
-    fs.writeFileSync(USER_DB_PATH, JSON.stringify([], null, 4), 'utf8');
-}
+// 데이터베이스 연결 자가 진단
+dbPool.getConnection()
+    .then(conn => {
+        console.log('✅ MySQL 데이터베이스 엔진과 성공적으로 동기화되었습니다. (포트: 3306)');
+        conn.release();
+    })
+    .catch(err => {
+        console.error('❌ MySQL 연결 실패! hexatopia_db 스키마 생성 여부나 MySQL 실행 상태를 확인하세요.');
+        console.error('오류 내용:', err.message);
+    });
 
-// 파일에서 유저 목록 읽어오기 Helper
-function readUsersFromFile() {
-    try {
-        const data = fs.readFileSync(USER_DB_PATH, 'utf8');
-        return JSON.parse(data);
-    } catch (e) {
-        return [];
-    }
-}
-
-// 파일에 유저 목록 저장하기 Helper
-function writeUsersToFile(users) {
-    fs.writeFileSync(USER_DB_PATH, JSON.stringify(users, null, 4), 'utf8');
-}
-
+// ==========================================
 // 비밀번호 암호화 유틸리티 (PBKDF2)
+// ==========================================
 function hashPassword(password, salt = null) {
     const currentSalt = salt || crypto.randomBytes(16).toString('hex');
     const hash = crypto.pbkdf2Sync(password, currentSalt, 1000, 64, 'sha512').toString('hex');
     return { salt: currentSalt, hash };
 }
 
-// 세션 상태 관리 (실제 쿠키 세션 대용 인메모리 관리 체계)
+// 인메모리 세션 상태 관리 체계
 let sessionState = {
     isLoggedIn: false,
     uid: null,
@@ -51,13 +54,12 @@ let sessionState = {
     role: "GUEST"
 };
 
-// 미들웨어 바인딩: 모든 페이지 템플릿에 세션 전송
 app.use((req, res, next) => {
     res.locals.session = sessionState;
     next();
 });
 
-// 더미 콘텐츠용 데이터베이스
+// 메인 대시보드 데이터베이스 더미셋
 const contentDatabase = {
     feeds: [
         { id: 1, type: "사육기", author: "벅스마스터", title: "체장 85mm 왕사슴벌레 작출 성공기!", content: "균사 3병 째에 엄청난 무게를 보여주더니 결국 벽을 넘었습니다...", likes: 142 },
@@ -71,122 +73,131 @@ const contentDatabase = {
     ]
 };
 
+// ==========================================
 // 메인 라우터
-app.get('/', (req, res) => {
-    res.render('home', { 
-        stats: { users: readUsersFromFile().length + 1240, insectsCount: 3840, marketVolume: "99.9 %" },
-        trendingFeeds: contentDatabase.feeds,
-        recentPins: contentDatabase.mapPins,
-        premiumGoods: contentDatabase.marketItems
-    });
+// ==========================================
+app.get('/', async (req, res) => {
+    try {
+        const [rows] = await dbPool.query('SELECT COUNT(*) AS userCount FROM users');
+        const dbUserCount = rows[0].userCount;
+
+        res.render('home', { 
+            stats: { users: dbUserCount + 1240, insectsCount: 3840, marketVolume: "99.9 %" },
+            trendingFeeds: contentDatabase.feeds,
+            recentPins: contentDatabase.mapPins,
+            premiumGoods: contentDatabase.marketItems
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('대시보드 로딩 중 내부 데이터베이스 에러 발생');
+    }
 });
 
-// [인증 1] 회원가입 API
-app.post('/auth/register', (req, res) => {
+// [인증 1] 회원가입 (MySQL INSERT)
+app.post('/auth/register', async (req, res) => {
     const { username, password, nickname, hint } = req.body;
-    const users = readUsersFromFile();
+    
+    try {
+        const [existing] = await dbPool.query('SELECT id FROM users WHERE username = ?', [username]);
+        if (existing.length > 0) {
+            return res.json({ success: false, message: "이미 사용 중인 연구원 아이디입니다." });
+        }
 
-    if (users.find(u => u.username === username)) {
-        return res.json({ success: false, message: "이미 존재하는 아이디입니다." });
+        const cryptoData = hashPassword(password);
+        const insertSql = `
+            INSERT INTO users (username, password_hash, salt, nickname, hint) 
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        await dbPool.query(insertSql, [username, cryptoData.hash, cryptoData.salt, nickname, hint]);
+
+        res.json({ success: true, message: "연구원 등록이 MySQL DB에 안전하게 기록되었습니다. 로그인을 진행해 주세요!" });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "회원가입 처리 중 DB 서버 내부 오류가 발생했습니다." });
     }
-
-    const cryptoData = hashPassword(password);
-    const newUser = {
-        username,
-        salt: cryptoData.salt,
-        passwordHash: cryptoData.hash,
-        nickname,
-        hint, // 패스워드 찾기용 질문 힌트 답변
-        role: "MEMBER",
-        registeredAt: new Date().toISOString()
-    };
-
-    users.push(newUser);
-    writeUsersToFile(users);
-    res.json({ success: true, message: "연구원 등록이 완료되었습니다. 로그인을 진행해 주세요!" });
 });
 
-// [인증 2] 로그인 API
-app.post('/auth/login', (req, res) => {
+// [인증 2] 로그인 (MySQL SELECT)
+app.post('/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    const users = readUsersFromFile();
-    const user = users.find(u => u.username === username);
 
-    if (!user) {
-        return res.json({ success: false, message: "일치하는 회원 정보가 없습니다." });
+    try {
+        const [users] = await dbPool.query('SELECT * FROM users WHERE username = ?', [username]);
+        if (users.length === 0) {
+            return res.json({ success: false, message: "일치하는 회원 정보가 없습니다." });
+        }
+
+        const user = users[0];
+        const verify = hashPassword(password, user.salt);
+        if (verify.hash !== user.password_hash) {
+            return res.json({ success: false, message: "비밀번호가 올바르지 않습니다." });
+        }
+
+        sessionState = {
+            isLoggedIn: true,
+            uid: user.username,
+            nickname: user.nickname,
+            role: user.role
+        };
+
+        res.json({ success: true, message: `${user.nickname} 연구원님, 환영합니다!` });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "로그인 검증 중 엔터프라이즈 서버 오류가 발생했습니다." });
     }
-
-    const verify = hashPassword(password, user.salt);
-    if (verify.hash !== user.passwordHash) {
-        return res.json({ success: false, message: "비밀번호가 올바르지 않습니다." });
-    }
-
-    // 세션 활성화
-    sessionState = {
-        isLoggedIn: true,
-        uid: user.username,
-        nickname: user.nickname,
-        role: user.role
-    };
-
-    res.json({ success: true, message: `${user.nickname} 연구원님, 환영합니다!` });
 });
 
-// [인증 3] 아이디/비밀번호 찾기 API (계정 정보 매칭 확인)
-app.post('/auth/find', (req, res) => {
+// [인증 3] 아이디/비밀번호 찾기 (MySQL SELECT)
+app.post('/auth/find', async (req, res) => {
     const { username, hint } = req.body;
-    const users = readUsersFromFile();
-    const user = users.find(u => u.username === username);
 
-    if (!user) {
-        return res.json({ success: false, message: "존재하지 않는 가입 아이디입니다." });
+    try {
+        const [users] = await dbPool.query('SELECT hint FROM users WHERE username = ?', [username]);
+        if (users.length === 0) {
+            return res.json({ success: false, message: "존재하지 않는 가입 아이디입니다." });
+        }
+
+        if (users[0].hint !== hint) {
+            return res.json({ success: false, message: "등록된 비밀번호 힌트 답변과 일치하지 않습니다." });
+        }
+
+        res.json({ success: true, message: `계정 무결성이 검증되었습니다. 임시 패스워드는 [ hexatopia123! ] 입니다. 로그인 후 변경해 주세요.` });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "계정 분실 정보 조회 중 DB 트랜잭션 에러 발생" });
     }
-
-    if (user.hint !== hint) {
-        return res.json({ success: false, message: "등록된 비밀번호 힌트 답변과 일치하지 않습니다." });
-    }
-
-    // 데모 환경 보안 정책상 가시적 가상 비밀번호 초기화 패스워드 제공
-    res.json({ success: true, message: `계정 무결성이 확인되었습니다. 임시 패스워드는 [ hexatopia123! ] 입니다. 로그인 후 변경해 주세요.` });
 });
 
-// [인증 4] 로그아웃 API
+// [인증 4] 로그아웃
 app.get('/auth/logout', (req, res) => {
     sessionState = { isLoggedIn: false, uid: null, nickname: null, role: "GUEST" };
     res.redirect('/');
 });
 
-// [인증 5] 회원 탈퇴 API
-app.post('/auth/withdraw', (req, res) => {
+// [인증 5] 회원 탈퇴 (MySQL DELETE)
+app.post('/auth/withdraw', async (req, res) => {
     if (!sessionState.isLoggedIn) {
-        return res.json({ success: false, message: "로그인된 상태에서만 탈퇴가 가능합니다." });
+        return res.json({ success: false, message: "로그인된 상태에서만 회원 영구 탈퇴가 가능합니다." });
     }
 
-    let users = readUsersFromFile();
-    const beforeLength = users.length;
-    users = users.filter(u => u.username !== sessionState.uid);
+    try {
+        const [result] = await dbPool.query('DELETE FROM users WHERE username = ?', [sessionState.uid]);
+        
+        if (result.affectedRows === 0) {
+            return res.json({ success: false, message: "삭제 대상 회원 데이터를 발견하지 못했습니다." });
+        }
 
-    if (users.length === beforeLength) {
-        return res.json({ success: false, message: "회원 탈퇴 처리 중 오류가 발생했거나 대상 유저를 찾지 못했습니다." });
+        sessionState = { isLoggedIn: false, uid: null, nickname: null, role: "GUEST" };
+        res.json({ success: true, message: "Hexatopia 클러스터에서 연구원님의 모든 계정 정보 및 인프라 파기가 완료되었습니다." });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "회원 영구 탈퇴 쿼리 수행 중 제약 조건 위반 혹은 오류 발생" });
     }
-
-    writeUsersToFile(users);
-    // 세션 파괴 및 초기화
-    sessionState = { isLoggedIn: false, uid: null, nickname: null, role: "GUEST" };
-    res.json({ success: true, message: "그동안 Hexatopia 플랫폼을 이용해 주셔서 감사합니다. 회원 탈퇴 정보가 파기되었습니다." });
 });
 
-// 가상 auth 복구 라우트 (기존 연동용)
-app.get('/toggle-auth', (req, res) => { res.redirect('/'); });
-
-// 기타 서브 라우트 더미 처리 연동
-app.get('/feed', (req, res) => res.render('home', { stats: { users: 1200, insectsCount: 3000, marketVolume: "99%" }, trendingFeeds: [], recentPins: [], premiumGoods: [] }));
-app.get('/map', (req, res) => res.redirect('/'));
-app.get('/forum', (req, res) => res.redirect('/'));
-app.get('/market', (req, res) => res.redirect('/'));
-app.get('/mypage', (req, res) => res.redirect('/'));
-app.get('/admin', (req, res) => res.redirect('/'));
+app.get('/toggle-auth', (req, res) => res.redirect('/'));
+app.get('/feed', (req, res) => res.redirect('/'));
 
 app.listen(PORT, () => {
-    console.log(`Hexatopia 가동 중 : http://localhost:${PORT}`);
+    console.log(`🚀 Hexatopia 엔터프라이즈 [MySQL Ver] 구동 중 : http://localhost:${PORT}`);
 });
